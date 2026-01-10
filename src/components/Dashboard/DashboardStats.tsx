@@ -35,12 +35,20 @@ const DashboardStats: React.FC = () => {
     ];
 
     return (
-        <div className={`grid gap-4 mb-6 ${cards.length === 5 ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        <div className={`grid gap-6 mb-2 ${cards.length === 5 ? 'grid-cols-5' : 'grid-cols-4'}`}>
             {cards.map((card, i) => (
-                <div key={i} className="p-4 rounded-xl bg-muted/30 border border-muted-foreground/10 flex flex-col justify-center">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
-                    <p className="text-2xl font-bold mt-1 text-foreground">{card.value}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">{card.sub}</p>
+                <div key={i} className="p-4 border border-white/10 bg-black hover:bg-white/5 transition-colors duration-200 group relative">
+                    {/* Tech Marker */}
+                    <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-white/20 group-hover:bg-accent-blue transition-colors"></div>
+
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">{card.label}</p>
+                    <div className="flex items-baseline gap-2">
+                        <h3 className="text-2xl font-mono font-bold text-white group-hover:text-accent-blue transition-colors">{card.value}</h3>
+                        {card.sub && <span className="text-[10px] font-mono text-white/50">{card.sub}</span>}
+                    </div>
+
+                    {/* Bottom Line Progress simulated */}
+                    <div className="absolute bottom-0 left-0 h-[1px] bg-accent-blue/50 w-0 group-hover:w-full transition-all duration-500"></div>
                 </div>
             ))}
         </div>

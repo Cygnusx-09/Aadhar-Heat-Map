@@ -40,11 +40,21 @@ export default {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                // Custom Technical Theme Colors
+                'dashboard-bg': '#000000', // Pure Black
+                'card-bg': 'transparent',  // Wireframe
+                'accent-red': '#ff3333',   // Signal Red
+                'accent-blue': '#00f0ff',   // Cyan/Neon Blue
+                'grid-line': '#1a1a1a',    // Dark Grey for borders
             },
             borderRadius: {
                 lg: "var(--radius)",
                 md: "calc(var(--radius) - 2px)",
                 sm: "calc(var(--radius) - 4px)",
+            },
+            fontFamily: {
+                sans: ['Satoshi', 'Inter', 'sans-serif'],
+                mono: ['"JetBrains Mono"', '"Geist Mono"', 'monospace'], // Technical font
             },
         },
     },

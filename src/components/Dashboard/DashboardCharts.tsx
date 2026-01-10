@@ -51,28 +51,71 @@ const DashboardCharts: React.FC = () => {
     }
 
     return (
-        <div className="grid grid-cols-2 gap-6 h-full">
-            <div className="rounded-xl border p-4 bg-white shadow-sm flex flex-col">
-                <h3 className="text-sm font-semibold mb-4 text-foreground/80">Top 5 States by Population</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+            {/* Top Regions - Vertical Bar Chart */}
+            <div className="flex-1 p-6 border border-white/10 bg-black/40 flex flex-col min-h-[600px] relative">
+                {/* Tech Corner */}
+                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/30"></div>
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/30"></div>
+
+                <div className="mb-6 border-b border-white/10 pb-2 flex justify-between items-end">
+                    <div>
+                        <h3 className="font-mono text-sm uppercase tracking-widest text-white/80">Region_Analysis</h3>
+                        <p className="text-[10px] font-mono text-white/40">DENSITY_SORT_DESC</p>
+                    </div>
+                    <div className="text-[10px] font-mono text-accent-blue">SYS_READY</div>
+                </div>
                 <div className="flex-1 min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={topRegions} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <CartesianGrid strokeDasharray="1 1" horizontal={false} stroke="#333" />
                             <XAxis type="number" hide />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-                            <Tooltip
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                formatter={(value: number) => new Intl.NumberFormat('en-IN').format(value)}
+                            <YAxis
+                                type="category"
+                                dataKey="name"
+                                width={100}
+                                tick={{ fontSize: 10, fill: '#666', fontFamily: 'monospace' }}
+                                axisLine={false}
+                                tickLine={false}
                             />
-                            <Bar dataKey="value" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={20} />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#000',
+                                    border: '1px solid #333',
+                                    color: '#fff',
+                                    fontFamily: 'monospace'
+                                }}
+                                itemStyle={{ color: '#00f0ff' }}
+                                labelStyle={{ color: '#fff' }}
+                                formatter={(value: number) => new Intl.NumberFormat('en-IN').format(value)}
+                                cursor={{ fill: '#00f0ff', opacity: 0.1 }}
+                            />
+                            <Bar
+                                dataKey="value"
+                                fill="#00f0ff"
+                                barSize={10}
+                                activeBar={{ fill: '#fff' }}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
-            <div className="rounded-xl border p-4 bg-white shadow-sm flex flex-col">
-                <h3 className="text-sm font-semibold mb-4 text-foreground/80">Demographic Distribution</h3>
-                <div className="flex-1 min-h-0">
+
+            {/* Age Distribution - Donut Chart Style */}
+            <div className="flex-1 p-6 border border-white/10 bg-black/40 flex flex-col min-h-[600px] relative">
+                {/* Tech Corner */}
+                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/30"></div>
+                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/30"></div>
+
+                <div className="mb-6 border-b border-white/10 pb-2 flex justify-between items-end">
+                    <div>
+                        <h3 className="font-mono text-sm uppercase tracking-widest text-white/80">Demographics_Dist</h3>
+                        <p className="text-[10px] font-mono text-white/40">AGE_GROUP_SEGMENTATION</p>
+                    </div>
+                    <div className="text-[10px] font-mono text-accent-red">LIVE_DATA</div>
+                </div>
+                <div className="flex-1 min-h-0 relative">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -81,21 +124,44 @@ const DashboardCharts: React.FC = () => {
                                 cy="50%"
                                 innerRadius={60}
                                 outerRadius={80}
-                                fill="#8884d8"
                                 paddingAngle={5}
                                 dataKey="value"
+                                stroke="none"
                             >
                                 {ageDistribution.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip formatter={(value: number) => new Intl.NumberFormat('en-IN').format(value)} />
-                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#18181b',
+                                    borderRadius: '12px',
+                                    border: '1px solid #27272a',
+                                    color: '#fff',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                                }}
+                                itemStyle={{ color: '#fff' }}
+                                labelStyle={{ color: '#fff' }}
+                                formatter={(value: number) => new Intl.NumberFormat('en-IN').format(value)}
+                            />
+                            <Legend
+                                verticalAlign="bottom"
+                                height={36}
+                                iconType="circle"
+                                wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }}
+                            />
                         </PieChart>
                     </ResponsiveContainer>
+
+                    {/* Center Text Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="text-center">
+                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
