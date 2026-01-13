@@ -100,19 +100,35 @@ export function CSVUpload() {
                             return;
                         }
 
-                        newRecords.push({
+                        const record: DemographicRecord = {
                             fileId: fileId,
                             date: row.date,
                             state: row.state,
                             district: row.district,
                             pincode: row.pincode,
+                            // Generic mapping for Dashboard/Map compatibility
                             demo_age_0_5: age0_5 > 0 ? age0_5 : undefined,
                             demo_age_5_17: age5_17,
                             demo_age_17_: age17Plus,
                             total_population: age0_5 + age5_17 + age17Plus,
                             lat: row.lat ? parseFloat(row.lat) : undefined,
                             lng: row.lng ? parseFloat(row.lng) : undefined,
-                        });
+                        };
+
+                        // Specific mappings for Analytics
+                        if (hasBio) {
+                            record.bio_age_5_17 = parseInt(row.bio_age_5_17);
+                            record.bio_age_17_ = parseInt(row.bio_age_17_);
+                        } else if (hasEnrol) {
+                            record.enrol_age_0_5 = parseInt(row.age_0_5);
+                            record.enrol_age_5_17 = parseInt(row.age_5_17);
+                            record.enrol_age_18_ = parseInt(row.age_18_greater);
+                        } else if (hasDemo) {
+                            // Explicitly set original demo fields if it is a demo file, 
+                            // although the generic mapping above covers it, this is for clarity in analytics
+                        }
+
+                        newRecords.push(record);
                     });
 
                     if (errors.length > 0) {
