@@ -34,17 +34,22 @@ const MapViewer: React.FC = () => {
     useEffect(() => {
         // Load State GeoJSON
         const baseUrl = import.meta.env.BASE_URL;
-        // Ensure standard slash handling
         const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
         fetch(`${cleanBase}data/india-states.json`)
-            .then((response) => response.json())
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
             .then((data) => setGeoData(data))
             .catch((error) => console.error('Error loading State GeoJSON:', error));
 
         // Load District GeoJSON
         fetch(`${cleanBase}data/india-districts.json`)
-            .then((response) => response.json())
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
             .then((data) => setDistGeoData(data))
             .catch((error) => console.error('Error loading District GeoJSON:', error));
     }, []);
