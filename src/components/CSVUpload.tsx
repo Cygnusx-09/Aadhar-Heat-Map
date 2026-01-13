@@ -195,8 +195,10 @@ export function CSVUpload() {
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 className={cn(
-                    "relative border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center gap-3 transition-all cursor-pointer group",
-                    isDragging ? "border-primary bg-primary/5 scale-[1.02]" : "border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/30",
+                    "relative border border-dashed rounded-sm p-8 flex flex-col items-center justify-center text-center gap-3 transition-all cursor-pointer group bg-black/50 backdrop-blur-sm",
+                    isDragging
+                        ? "border-accent-blue bg-accent-blue/5"
+                        : "border-white/20 hover:border-accent-blue/50 hover:bg-white/5",
                     isProcessing && "pointer-events-none opacity-60"
                 )}
                 onClick={() => document.getElementById('csv-input')?.click()}
@@ -211,9 +213,9 @@ export function CSVUpload() {
                 />
 
                 <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300",
-                    status.type === 'success' ? "bg-green-100 text-green-600" :
-                        status.type === 'error' ? "bg-red-100 text-red-600" : "bg-primary/10 text-primary group-hover:scale-110"
+                    "w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 bg-black border border-white/10",
+                    status.type === 'success' ? "text-green-500 border-green-500/50" :
+                        status.type === 'error' ? "text-accent-red border-accent-red/50" : "text-white group-hover:scale-110 group-hover:border-accent-blue/50 group-hover:text-accent-blue"
                 )}>
                     {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> :
                         status.type === 'success' ? <CheckCircle2 className="w-6 h-6" /> :
@@ -221,41 +223,47 @@ export function CSVUpload() {
                 </div>
 
                 <div>
-                    <p className="text-sm font-semibold">
-                        {isProcessing ? "Processing data..." :
-                            status.type === 'success' ? "File loaded!" : "Click to upload CSV(s)"}
+                    <p className="text-sm font-mono uppercase tracking-wider text-white">
+                        {isProcessing ? "PROCESSING..." :
+                            status.type === 'success' ? "FILE LOADED" : "UPLOAD CSV"}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {isProcessing ? "Validating records..." : "Supports single or multiple files"}
+                    <p className="text-[10px] font-mono text-gray-500 mt-1 uppercase tracking-wider">
+                        {isProcessing ? "VALIDATING RECORDS..." : "DRAG & DROP OR CLICK"}
                     </p>
                 </div>
+
+                {/* Tech corners */}
+                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20 group-hover:border-accent-blue/50 transition-colors" />
+                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20 group-hover:border-accent-blue/50 transition-colors" />
+                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/20 group-hover:border-accent-blue/50 transition-colors" />
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/20 group-hover:border-accent-blue/50 transition-colors" />
             </div>
 
             {/* Error Message */}
             {status.message && status.type === 'error' && (
-                <div className="p-3 rounded-lg text-xs font-medium flex gap-2 items-start bg-red-50 text-red-700 border border-red-200">
+                <div className="p-3 rounded-sm text-xs font-mono flex gap-2 items-start bg-accent-red/10 text-accent-red border border-accent-red/20 shadow-[0_0_10px_rgba(255,51,51,0.1)]">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span className="whitespace-pre-line">{status.message}</span>
+                    <span className="whitespace-pre-line uppercase">{status.message}</span>
                 </div>
             )}
 
             {/* Uploaded Files List */}
             {uploadedFiles.length > 0 && (
                 <div className="space-y-2 mt-4">
-                    <h3 className="text-xs font-semibold uppercase text-muted-foreground">Uploaded Files</h3>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                    <h3 className="text-[10px] font-mono uppercase text-gray-500 tracking-wider">Active Files</h3>
+                    <div className="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                         {uploadedFiles.map(file => (
-                            <div key={file.id} className="flex items-center justify-between p-2 rounded-md border bg-background text-sm">
+                            <div key={file.id} className="flex items-center justify-between p-2 rounded-sm border border-white/10 bg-black/50 hover:bg-white/5 transition-colors group">
                                 <div className="flex flex-col overflow-hidden">
-                                    <span className="font-medium truncate" title={file.name}>{file.name}</span>
-                                    <span className="text-[10px] text-muted-foreground">{file.recordCount} records</span>
+                                    <span className="font-mono text-xs text-white truncate uppercase" title={file.name}>{file.name}</span>
+                                    <span className="text-[10px] font-mono text-gray-500">{file.recordCount.toLocaleString()} RECORDS</span>
                                 </div>
                                 <button
                                     onClick={() => removeFile(file.id)}
-                                    className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
+                                    className="p-1 text-gray-500 hover:text-accent-red transition-colors opacity-0 group-hover:opacity-100"
                                     title="Remove file"
                                 >
-                                    <X className="w-4 h-4" />
+                                    <X className="w-3 h-3" />
                                 </button>
                             </div>
                         ))}

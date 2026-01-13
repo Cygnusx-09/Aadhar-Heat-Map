@@ -8,19 +8,19 @@ export const AgeGroupFilter: React.FC = () => {
     const options = ['Total', '5-17', '17+'] as const;
 
     return (
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        <div className="flex bg-black border border-white/10 p-0.5 rounded-sm">
             {options.map((option) => (
                 <button
                     key={option}
                     onClick={() => setAgeGroup(option)}
                     className={cn(
-                        "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        "flex-1 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all rounded-sm",
                         ageGroup === option
-                            ? "bg-white text-primary shadow-sm"
-                            : "text-muted-foreground hover:text-gray-900"
+                            ? "bg-accent-blue/10 text-accent-blue border border-accent-blue/20 shadow-[0_0_10px_rgba(0,240,255,0.1)]"
+                            : "text-gray-500 hover:text-white hover:bg-white/5"
                     )}
                 >
-                    {option === 'Total' ? 'All Ages' : option}
+                    {option === 'Total' ? 'All' : option}
                 </button>
             ))}
         </div>

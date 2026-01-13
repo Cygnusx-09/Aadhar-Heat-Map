@@ -104,20 +104,20 @@ export const ExportPanel: React.FC = () => {
             <button
                 onClick={handleExportCSV}
                 disabled={!filteredRecords.length || isExporting}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono uppercase tracking-wide text-gray-300 bg-black border border-white/10 rounded-sm hover:bg-white/5 hover:text-white hover:border-accent-blue/50 focus:outline-none focus:border-accent-blue transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
                 title="Export CSV"
             >
-                <FileSpreadsheet className="w-4 h-4" />
+                <FileSpreadsheet className="w-3.5 h-3.5 group-hover:text-accent-blue transition-colors" />
                 <span className="hidden sm:inline">CSV</span>
             </button>
             <button
                 onClick={handleExportPDF}
                 disabled={!filteredRecords.length || isExporting}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono uppercase tracking-wide text-accent-blue bg-accent-blue/10 border border-accent-blue/50 rounded-sm hover:bg-accent-blue/20 hover:shadow-[0_0_10px_rgba(0,240,255,0.2)] focus:outline-none focus:ring-1 focus:ring-accent-blue disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 title="Export PDF Report"
             >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                <span className="hidden sm:inline">Report</span>
+                {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">REPORT</span>
             </button>
         </div>
     );

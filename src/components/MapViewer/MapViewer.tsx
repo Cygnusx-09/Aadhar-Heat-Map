@@ -33,13 +33,17 @@ const MapViewer: React.FC = () => {
 
     useEffect(() => {
         // Load State GeoJSON
-        fetch('/data/india-states.json')
+        const baseUrl = import.meta.env.BASE_URL;
+        // Ensure standard slash handling
+        const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
+        fetch(`${cleanBase}data/india-states.json`)
             .then((response) => response.json())
             .then((data) => setGeoData(data))
             .catch((error) => console.error('Error loading State GeoJSON:', error));
 
         // Load District GeoJSON
-        fetch('/data/india-districts.json')
+        fetch(`${cleanBase}data/india-districts.json`)
             .then((response) => response.json())
             .then((data) => setDistGeoData(data))
             .catch((error) => console.error('Error loading District GeoJSON:', error));
