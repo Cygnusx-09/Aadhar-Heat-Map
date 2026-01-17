@@ -12,7 +12,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, Minus, Calendar, BarChart3, Loader2 } from 'lucide-react';
 
-export const TrendAnalysis: React.C = () => {
+export const TrendAnalysis: React.FC = () => {
     const { rawRecords } = useStore();
     const [granularity, setGranularity] = useState<TimeGranularity>('daily');
     const [showMovingAvg, setShowMovingAvg] = useState(false);
