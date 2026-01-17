@@ -13,7 +13,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, TrendingDown, Minus, Calendar, BarChart3, Loader2 } from 'lucide-react';
 
 export const TrendAnalysis: React.FC = () => {
-    const { rawRecords } = useStore();
+    const { rawRecords, uploadedFiles } = useStore();
     const [granularity, setGranularity] = useState<TimeGranularity>('daily');
     const [showMovingAvg, setShowMovingAvg] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -30,13 +30,47 @@ export const TrendAnalysis: React.FC = () => {
         total: true
     });
 
-    // Limit data for performance - process max 50k records
+    // Limit data for performance - use stratified sampling to include all file types
     const limitedRecords = useMemo(() => {
-        if (rawRecords.length > 50000) {
-            console.warn(`Large dataset detected (${rawRecords.length} records). Sampling to 50k for performance.`);
-            return rawRecords.slice(0, 50000);
+        const MAX_RECORDS = 200000; // Supports ~15 files with ~500k records each
+
+        if (rawRecords.length <= MAX_RECORDS) {
+            return rawRecords;
         }
-        return rawRecords;
+
+        console.warn(`Large dataset detected (${rawRecords.length} records). Using stratified sampling to ${MAX_RECORDS.toLocaleString()} for performance.`);
+
+        // Group records by fileId to ensure proportional sampling from each file
+        const recordsByFile = new Map<string, typeof rawRecords>();
+        rawRecords.forEach(record => {
+            const fileId = record.fileId || 'unknown';
+            if (!recordsByFile.has(fileId)) {
+                recordsByFile.set(fileId, []);
+            }
+            recordsByFile.get(fileId)!.push(record);
+        });
+
+        // Calculate proportional sample size for each file
+        const sampledRecords: typeof rawRecords = [];
+        const fileCount = recordsByFile.size;
+
+        recordsByFile.forEach((records, fileId) => {
+            // Calculate this file's proportional share
+            const proportion = records.length / rawRecords.length;
+            const sampleSize = Math.max(
+                Math.floor(MAX_RECORDS * proportion),
+                Math.min(records.length, Math.floor(MAX_RECORDS / fileCount)) // Ensure minimum representation
+            );
+
+            // Take evenly distributed samples from this file
+            const step = Math.max(1, Math.floor(records.length / sampleSize));
+            for (let i = 0; i < records.length && sampledRecords.length < MAX_RECORDS; i += step) {
+                sampledRecords.push(records[i]);
+            }
+        });
+
+        console.log(`Stratified sampling: ${fileCount} files, ${sampledRecords.length} total records sampled`);
+        return sampledRecords;
     }, [rawRecords]);
 
 
@@ -78,6 +112,40 @@ export const TrendAnalysis: React.FC = () => {
     // Day of week pattern
     const dayPattern = useMemo(() => getDayOfWeekPattern(limitedRecords), [limitedRecords]);
 
+    // Calculate global date range from all uploaded files
+    const globalDateRange = useMemo((): { earliest: Date; latest: Date } | null => {
+        if (uploadedFiles.length === 0) return null;
+
+        const parseDate = (dateStr: string) => {
+            const [day, month, year] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        };
+
+        let earliest: Date | null = null;
+        let latest: Date | null = null;
+
+        uploadedFiles.forEach(file => {
+            if (file.dateRange) {
+                const e = parseDate(file.dateRange.earliest);
+                const l = parseDate(file.dateRange.latest);
+                if (!earliest || e < earliest) earliest = e;
+                if (!latest || l > latest) latest = l;
+            }
+        });
+
+        if (earliest && latest) {
+            return { earliest, latest };
+        }
+        return null;
+    }, [uploadedFiles]);
+
+    // Count files by type
+    const fileCountsByType = useMemo(() => ({
+        demographic: uploadedFiles.filter(f => f.fileType === 'demographic').length,
+        biometric: uploadedFiles.filter(f => f.fileType === 'biometric').length,
+        enrollment: uploadedFiles.filter(f => f.fileType === 'enrollment').length
+    }), [uploadedFiles]);
+
     // Latest activity totals
     const latestActivity = activityData.length > 0 ? activityData[activityData.length - 1] : null;
 
@@ -114,9 +182,32 @@ export const TrendAnalysis: React.FC = () => {
             <div className="flex justify-between items-end border-b border-white/10 pb-4">
                 <div>
                     <h2 className="text-2xl font-mono uppercase tracking-widest text-white">Activity Trend Analysis</h2>
-                    <p className="text-xs text-white/50 font-mono mt-1">
-                        Enrollment & Update Activity Over Time
-                    </p>
+                    <div className="flex items-center gap-4 mt-1">
+                        {globalDateRange && (
+                            <p className="text-xs text-white/50 font-mono">
+                                {globalDateRange.earliest.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                {' → '}
+                                {globalDateRange.latest.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                        )}
+                        <div className="flex gap-2 text-[10px] font-mono">
+                            {fileCountsByType.demographic > 0 && (
+                                <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded">
+                                    {fileCountsByType.demographic} DEMO
+                                </span>
+                            )}
+                            {fileCountsByType.biometric > 0 && (
+                                <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
+                                    {fileCountsByType.biometric} BIO
+                                </span>
+                            )}
+                            {fileCountsByType.enrollment > 0 && (
+                                <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 border border-green-500/30 rounded">
+                                    {fileCountsByType.enrollment} ENROL
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Granularity Controls */}
@@ -234,12 +325,16 @@ export const TrendAnalysis: React.FC = () => {
                         <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                             <XAxis
-                                dataKey="date"
+                                dataKey="timestamp"
+                                type="number"
+                                scale="time"
+                                domain={['dataMin', 'dataMax']}
                                 stroke="#666"
                                 tick={{ fill: '#666', fontSize: 10 }}
                                 tickLine={false}
                                 axisLine={false}
-                                domain={['dataMin', 'dataMax']}
+                                tickFormatter={(value) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                interval="preserveStartEnd"
                             />
                             <YAxis
                                 stroke="#666"
@@ -256,93 +351,31 @@ export const TrendAnalysis: React.FC = () => {
                                 }}
                             />
 
-                            {/* Demographic Lines */}
-                            {visibleLines.demo_5_17 && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="demo_5_17"
-                                    stroke="#3b82f6"
-                                    name="Demo 5-17"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-                            {visibleLines.demo_17_plus && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="demo_17_plus"
-                                    stroke="#60a5fa"
-                                    name="Demo 17+"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-
-                            {/* Biometric Lines */}
-                            {visibleLines.bio_5_17 && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="bio_5_17"
-                                    stroke="#f59e0b"
-                                    name="Bio 5-17"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-                            {visibleLines.bio_17_plus && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="bio_17_plus"
-                                    stroke="#fbbf24"
-                                    name="Bio 17+"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-
-                            {/* Enrollment Lines */}
-                            {visibleLines.enrol_0_5 && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="enrol_0_5"
-                                    stroke="#10b981"
-                                    name="Enrol 0-5"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-                            {visibleLines.enrol_5_17 && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="enrol_5_17"
-                                    stroke="#34d399"
-                                    name="Enrol 5-17"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-                            {visibleLines.enrol_18_plus && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="enrol_18_plus"
-                                    stroke="#6ee7b7"
-                                    name="Enrol 18+"
-                                    strokeWidth={2}
-                                    dot={false}
-                                />
-                            )}
-
-                            {/* Total Line */}
-                            {visibleLines.total && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="total_activity"
-                                    stroke="#ffffff"
-                                    name="Total Activity"
-                                    strokeWidth={3}
-                                    dot={false}
-                                />
-                            )}
+                            {/* Demographic Lines Only */}
+                            <Line
+                                type="monotone"
+                                dataKey="demo_5_17"
+                                stroke="#3b82f6"
+                                name="Demo 5-17"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="demo_17_plus"
+                                stroke="#60a5fa"
+                                name="Demo 17+"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="demographic_activity"
+                                stroke="#8b5cf6"
+                                name="Total Demographic"
+                                strokeWidth={3}
+                                dot={false}
+                            />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -372,12 +405,16 @@ export const TrendAnalysis: React.FC = () => {
                         <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                             <XAxis
-                                dataKey="date"
+                                dataKey="timestamp"
+                                type="number"
+                                scale="time"
+                                domain={['dataMin', 'dataMax']}
                                 stroke="#666"
                                 tick={{ fill: '#666', fontSize: 10 }}
                                 tickLine={false}
                                 axisLine={false}
-                                domain={['dataMin', 'dataMax']}
+                                tickFormatter={(value) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                interval="preserveStartEnd"
                             />
                             <YAxis
                                 stroke="#666"
@@ -450,12 +487,16 @@ export const TrendAnalysis: React.FC = () => {
                         <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                             <XAxis
-                                dataKey="date"
+                                dataKey="timestamp"
+                                type="number"
+                                scale="time"
+                                domain={['dataMin', 'dataMax']}
                                 stroke="#666"
                                 tick={{ fill: '#666', fontSize: 10 }}
                                 tickLine={false}
                                 axisLine={false}
-                                domain={['dataMin', 'dataMax']}
+                                tickFormatter={(value) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                interval="preserveStartEnd"
                             />
                             <YAxis
                                 stroke="#666"

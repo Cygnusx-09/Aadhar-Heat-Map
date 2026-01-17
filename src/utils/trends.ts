@@ -97,10 +97,22 @@ export const aggregateActivityByTime = (
 
         const dataPoint = aggregationMap.get(key)! as any;
 
-        // Identify file type by checking which specific fields are present
+        // Identify file type by checking which specific fields are present AND have valid numeric values
         // Priority: Check specific fields first (bio_*, enrol_*) before falling back to generic demo_*
 
-        if (record.bio_age_5_17 !== undefined && record.bio_age_5_17 !== null) {
+        // Check for biometric data - bio_age fields must be valid numbers
+        const hasBioData = typeof record.bio_age_5_17 === 'number' && !isNaN(record.bio_age_5_17);
+
+        // Check for enrollment data - enrol_age fields must be valid numbers
+        const hasEnrolData = (typeof record.enrol_age_0_5 === 'number' && !isNaN(record.enrol_age_0_5)) ||
+            (typeof record.enrol_age_5_17 === 'number' && !isNaN(record.enrol_age_5_17)) ||
+            (typeof record.enrol_age_18_ === 'number' && !isNaN(record.enrol_age_18_));
+
+        // Check for demographic data - demo_age fields must be valid numbers
+        const hasDemoData = (typeof record.demo_age_5_17 === 'number' && !isNaN(record.demo_age_5_17)) ||
+            (typeof record.demo_age_17_ === 'number' && !isNaN(record.demo_age_17_));
+
+        if (hasBioData) {
             // Biometric file
             const bio_5_17 = record.bio_age_5_17 || 0;
             const bio_17_plus = record.bio_age_17_ || 0;
@@ -109,7 +121,7 @@ export const aggregateActivityByTime = (
             dataPoint.bio_5_17 += bio_5_17;
             dataPoint.bio_17_plus += bio_17_plus;
 
-        } else if (record.enrol_age_0_5 !== undefined || record.enrol_age_5_17 !== undefined) {
+        } else if (hasEnrolData) {
             // Enrollment file
             const enrol_0_5 = record.enrol_age_0_5 || 0;
             const enrol_5_17 = record.enrol_age_5_17 || 0;
@@ -120,8 +132,8 @@ export const aggregateActivityByTime = (
             dataPoint.enrol_5_17 += enrol_5_17;
             dataPoint.enrol_18_plus += enrol_18_plus;
 
-        } else {
-            // Demographic file (only has generic demo_* fields, no specific bio_ or enrol_)
+        } else if (hasDemoData) {
+            // Demographic file
             const demo_5_17 = record.demo_age_5_17 || 0;
             const demo_17_plus = record.demo_age_17_ || 0;
 

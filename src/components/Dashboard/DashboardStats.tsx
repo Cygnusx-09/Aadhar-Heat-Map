@@ -13,13 +13,20 @@ const DashboardStats: React.FC = () => {
             recordCount: 0
         };
 
-        return filteredRecords.reduce((acc, curr) => ({
-            totalPop: acc.totalPop + (curr.total_population || 0),
-            totalAge0_5: acc.totalAge0_5 + (curr.demo_age_0_5 || 0),
-            totalAge5_17: acc.totalAge5_17 + (curr.demo_age_5_17 || 0),
-            totalAge17Plus: acc.totalAge17Plus + (curr.demo_age_17_ || 0),
-            recordCount: acc.recordCount + 1
-        }), { totalPop: 0, totalAge0_5: 0, totalAge5_17: 0, totalAge17Plus: 0, recordCount: 0 });
+        return filteredRecords.reduce((acc, curr) => {
+            // Sum age groups from ALL file types (demo, bio, enrol)
+            const age0_5 = (curr.demo_age_0_5 || 0) + (curr.enrol_age_0_5 || 0);
+            const age5_17 = (curr.demo_age_5_17 || 0) + (curr.bio_age_5_17 || 0) + (curr.enrol_age_5_17 || 0);
+            const age17Plus = (curr.demo_age_17_ || 0) + (curr.bio_age_17_ || 0) + (curr.enrol_age_18_ || 0);
+
+            return {
+                totalPop: acc.totalPop + (curr.total_population || 0),
+                totalAge0_5: acc.totalAge0_5 + age0_5,
+                totalAge5_17: acc.totalAge5_17 + age5_17,
+                totalAge17Plus: acc.totalAge17Plus + age17Plus,
+                recordCount: acc.recordCount + 1
+            };
+        }, { totalPop: 0, totalAge0_5: 0, totalAge5_17: 0, totalAge17Plus: 0, recordCount: 0 });
     }, [filteredRecords]);
 
     const formatNumber = (num: number) => {
