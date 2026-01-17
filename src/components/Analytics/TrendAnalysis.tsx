@@ -207,57 +207,29 @@ export const TrendAnalysis: React.FC = () => {
                 </div>
             </div>
 
-            {/* Activity Over Time Chart with Age Group Controls */}
-            <div className="bg-black/40 border border-white/10 rounded-lg p-6">
-                <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-sm uppercase tracking-wider text-white/60 font-mono">Activity Volume Over Time (by Age Group)</h3>
+            {/* Three Separate Charts - One for each data type */}
 
-                    {/* Age Group Filter */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.demo_5_17} onChange={() => setVisibleLines(prev => ({ ...prev, demo_5_17: !prev.demo_5_17 }))} className="rounded" />
+            {/* 1. Demographic Activity Chart */}
+            <div className="bg-black/40 border border-white/10 rounded-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm uppercase tracking-wider text-white/60 font-mono">Demographic Updates Activity</h3>
+                    <div className="flex gap-2 text-xs">
+                        <span className="flex items-center gap-1.5">
                             <span className="w-3 h-0.5 bg-[#3b82f6]"></span>
-                            Demo 5-17
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.demo_17_plus} onChange={() => setVisibleLines(prev => ({ ...prev, demo_17_plus: !prev.demo_17_plus }))} className="rounded" />
+                            Age 5-17
+                        </span>
+                        <span className="flex items-center gap-1.5">
                             <span className="w-3 h-0.5 bg-[#60a5fa]"></span>
-                            Demo 17+
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.bio_5_17} onChange={() => setVisibleLines(prev => ({ ...prev, bio_5_17: !prev.bio_5_17 }))} className="rounded" />
-                            <span className="w-3 h-0.5 bg-[#f59e0b]"></span>
-                            Bio 5-17
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.bio_17_plus} onChange={() => setVisibleLines(prev => ({ ...prev, bio_17_plus: !prev.bio_17_plus }))} className="rounded" />
-                            <span className="w-3 h-0.5 bg-[#fbbf24]"></span>
-                            Bio 17+
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.enrol_0_5} onChange={() => setVisibleLines(prev => ({ ...prev, enrol_0_5: !prev.enrol_0_5 }))} className="rounded" />
-                            <span className="w-3 h-0.5 bg-[#10b981]"></span>
-                            Enrol 0-5
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.enrol_5_17} onChange={() => setVisibleLines(prev => ({ ...prev, enrol_5_17: !prev.enrol_5_17 }))} className="rounded" />
-                            <span className="w-3 h-0.5 bg-[#34d399]"></span>
-                            Enrol 5-17
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors">
-                            <input type="checkbox" checked={visibleLines.enrol_18_plus} onChange={() => setVisibleLines(prev => ({ ...prev, enrol_18_plus: !prev.enrol_18_plus }))} className="rounded" />
-                            <span className="w-3 h-0.5 bg-[#6ee7b7]"></span>
-                            Enrol 18+
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-white/60 hover:text-white transition-colors font-bold">
-                            <input type="checkbox" checked={visibleLines.total} onChange={() => setVisibleLines(prev => ({ ...prev, total: !prev.total }))} className="rounded" />
-                            <span className="w-3 h-0.5 bg-white"></span>
+                            Age 17+
+                        </span>
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <span className="w-3 h-0.5 bg-[#8b5cf6]"></span>
                             Total
-                        </label>
+                        </span>
                     </div>
                 </div>
 
-                <div className="h-[400px]">
+                <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -371,6 +343,166 @@ export const TrendAnalysis: React.FC = () => {
                                     dot={false}
                                 />
                             )}
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* 2. Biometric Activity Chart */}
+            <div className="bg-black/40 border border-white/10 rounded-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm uppercase tracking-wider text-white/60 font-mono">Biometric Updates Activity</h3>
+                    <div className="flex gap-2 text-xs">
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-[#f59e0b]"></span>
+                            Age 5-17
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-[#fbbf24]"></span>
+                            Age 17+
+                        </span>
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <span className="w-3 h-0.5 bg-[#fb923c]"></span>
+                            Total
+                        </span>
+                    </div>
+                </div>
+                <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                            <XAxis
+                                dataKey="date"
+                                stroke="#666"
+                                tick={{ fill: '#666', fontSize: 10 }}
+                                tickLine={false}
+                                axisLine={false}
+                                domain={['dataMin', 'dataMax']}
+                            />
+                            <YAxis
+                                stroke="#666"
+                                tick={{ fill: '#666', fontSize: 10 }}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: 'rgba(0,0,0,0.9)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '4px',
+                                    fontSize: '12px'
+                                }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="bio_5_17"
+                                stroke="#f59e0b"
+                                name="Bio 5-17"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="bio_17_plus"
+                                stroke="#fbbf24"
+                                name="Bio 17+"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="biometric_activity"
+                                stroke="#fb923c"
+                                name="Total Biometric"
+                                strokeWidth={3}
+                                dot={false}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* 3. Enrollment Activity Chart */}
+            <div className="bg-black/40 border border-white/10 rounded-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm uppercase tracking-wider text-white/60 font-mono">New Enrollment Activity</h3>
+                    <div className="flex gap-2 text-xs">
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-[#10b981]"></span>
+                            Age 0-5
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-[#34d399]"></span>
+                            Age 5-17
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-[#6ee7b7]"></span>
+                            Age 18+
+                        </span>
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <span className="w-3 h-0.5 bg-[#059669]"></span>
+                            Total
+                        </span>
+                    </div>
+                </div>
+                <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                            <XAxis
+                                dataKey="date"
+                                stroke="#666"
+                                tick={{ fill: '#666', fontSize: 10 }}
+                                tickLine={false}
+                                axisLine={false}
+                                domain={['dataMin', 'dataMax']}
+                            />
+                            <YAxis
+                                stroke="#666"
+                                tick={{ fill: '#666', fontSize: 10 }}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: 'rgba(0,0,0,0.9)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '4px',
+                                    fontSize: '12px'
+                                }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="enrol_0_5"
+                                stroke="#10b981"
+                                name="Enrol 0-5"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="enrol_5_17"
+                                stroke="#34d399"
+                                name="Enrol 5-17"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="enrol_18_plus"
+                                stroke="#6ee7b7"
+                                name="Enrol 18+"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="enrollment_activity"
+                                stroke="#059669"
+                                name="Total Enrollment"
+                                strokeWidth={3}
+                                dot={false}
+                            />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
