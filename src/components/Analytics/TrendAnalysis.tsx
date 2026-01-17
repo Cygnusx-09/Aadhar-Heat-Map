@@ -267,6 +267,7 @@ export const TrendAnalysis: React.FC = () => {
                                 tick={{ fill: '#666', fontSize: 10 }}
                                 tickLine={false}
                                 axisLine={false}
+                                domain={['dataMin', 'dataMax']}
                             />
                             <YAxis
                                 stroke="#666"
