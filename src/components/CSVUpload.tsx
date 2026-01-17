@@ -123,6 +123,10 @@ export function CSVUpload() {
                             record.enrol_age_18_ = parseInt(row.age_18_greater);
                         } else if (hasDemo) {
                             // Demographic file - populate ONLY demo fields
+                            if (isNaN(age5_17) || isNaN(age17Plus)) {
+                                errors.push(`Row ${rowNum}: Invalid age values for demographic file`);
+                                return;
+                            }
                             record.demo_age_0_5 = age0_5 > 0 ? age0_5 : undefined;
                             record.demo_age_5_17 = age5_17;
                             record.demo_age_17_ = age17Plus;
