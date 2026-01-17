@@ -10,6 +10,14 @@ export interface ActivityDataPoint {
     biometric_activity: number;
     enrollment_activity: number;
     total_activity: number;
+    // Age group breakdowns
+    demo_5_17: number;
+    demo_17_plus: number;
+    bio_5_17: number;
+    bio_17_plus: number;
+    enrol_0_5: number;
+    enrol_5_17: number;
+    enrol_18_plus: number;
 }
 
 export interface TrendIndicator {
@@ -75,26 +83,51 @@ export const aggregateActivityByTime = (
                 demographic_activity: 0,
                 biometric_activity: 0,
                 enrollment_activity: 0,
-                total_activity: 0
+                total_activity: 0,
+                // Age group breakdowns
+                demo_5_17: 0,
+                demo_17_plus: 0,
+                bio_5_17: 0,
+                bio_17_plus: 0,
+                enrol_0_5: 0,
+                enrol_5_17: 0,
+                enrol_18_plus: 0
             });
         }
 
-        const dataPoint = aggregationMap.get(key)!;
+        const dataPoint = aggregationMap.get(key)! as any;
 
-        // Count activity based on specific fields presence
-        // Demographic: has demo_age_5_17 but NOT bio or enrol specific fields
-        if (record.demo_age_5_17 && !record.bio_age_5_17 && !record.enrol_age_0_5) {
-            dataPoint.demographic_activity += record.demo_age_5_17 + record.demo_age_17_;
-        }
+        // Identify file type by checking which specific fields are present
+        // Priority: Check specific fields first (bio_*, enrol_*) before falling back to generic demo_*
 
-        // Biometric: has bio specific fields
-        if (record.bio_age_5_17) {
-            dataPoint.biometric_activity += record.bio_age_5_17 + (record.bio_age_17_ || 0);
-        }
+        if (record.bio_age_5_17 !== undefined && record.bio_age_5_17 !== null) {
+            // Biometric file
+            const bio_5_17 = record.bio_age_5_17 || 0;
+            const bio_17_plus = record.bio_age_17_ || 0;
 
-        // Enrollment: has enrol specific fields
-        if (record.enrol_age_0_5 || record.enrol_age_5_17) {
-            dataPoint.enrollment_activity += (record.enrol_age_0_5 || 0) + (record.enrol_age_5_17 || 0) + (record.enrol_age_18_ || 0);
+            dataPoint.biometric_activity += bio_5_17 + bio_17_plus;
+            dataPoint.bio_5_17 += bio_5_17;
+            dataPoint.bio_17_plus += bio_17_plus;
+
+        } else if (record.enrol_age_0_5 !== undefined || record.enrol_age_5_17 !== undefined) {
+            // Enrollment file
+            const enrol_0_5 = record.enrol_age_0_5 || 0;
+            const enrol_5_17 = record.enrol_age_5_17 || 0;
+            const enrol_18_plus = record.enrol_age_18_ || 0;
+
+            dataPoint.enrollment_activity += enrol_0_5 + enrol_5_17 + enrol_18_plus;
+            dataPoint.enrol_0_5 += enrol_0_5;
+            dataPoint.enrol_5_17 += enrol_5_17;
+            dataPoint.enrol_18_plus += enrol_18_plus;
+
+        } else {
+            // Demographic file (only has generic demo_* fields, no specific bio_ or enrol_)
+            const demo_5_17 = record.demo_age_5_17 || 0;
+            const demo_17_plus = record.demo_age_17_ || 0;
+
+            dataPoint.demographic_activity += demo_5_17 + demo_17_plus;
+            dataPoint.demo_5_17 += demo_5_17;
+            dataPoint.demo_17_plus += demo_17_plus;
         }
 
         dataPoint.total_activity =
