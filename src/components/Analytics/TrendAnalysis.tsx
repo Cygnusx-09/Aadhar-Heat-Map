@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import {
     aggregateActivityByTime,
@@ -10,15 +10,49 @@ import {
     ActivityDataPoint
 } from '../../utils/trends';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Minus, Calendar, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Calendar, BarChart3, Loader2 } from 'lucide-react';
 
-export const TrendAnalysis: React.FC = () => {
+export const TrendAnalysis: React.C = () => {
     const { rawRecords } = useStore();
     const [granularity, setGranularity] = useState<TimeGranularity>('daily');
     const [showMovingAvg, setShowMovingAvg] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Aggregate data by selected time period
-    const activityData = useMemo(() => aggregateActivityByTime(rawRecords, granularity), [rawRecords, granularity]);
+    // Limit data for performance - process max 50k records
+    const limitedRecords = useMemo(() => {
+        if (rawRecords.length > 50000) {
+            console.warn(`Large dataset detected (${rawRecords.length} records). Sampling to 50k for performance.`);
+            return rawRecords.slice(0, 50000);
+        }
+        return rawRecords;
+    }, [rawRecords]);
+
+
+    // Aggregate data by selected time period with async processing
+    const [activityData, setActivityData] = useState<ActivityDataPoint[]>([]);
+    const [weeklyData, setWeeklyData] = useState<ActivityDataPoint[]>([]);
+    const [monthlyData, setMonthlyData] = useState<ActivityDataPoint[]>([]);
+
+    useEffect(() => {
+        setIsLoading(true);
+
+        // Use setTimeout to prevent UI blocking
+        setTimeout(() => {
+            try {
+                const daily = aggregateActivityByTime(limitedRecords, granularity);
+                const weekly = aggregateActivityByTime(limitedRecords, 'weekly');
+                const monthly = aggregateActivityByTime(limitedRecords, 'monthly');
+
+                setActivityData(daily);
+                setWeeklyData(weekly);
+                setMonthlyData(monthly);
+            } catch (error) {
+                console.error('Error processing trend data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }, 0);
+    }, [limitedRecords, granularity]);
 
     // Apply moving average if enabled
     const displayData = useMemo(() => {
@@ -26,14 +60,11 @@ export const TrendAnalysis: React.FC = () => {
     }, [activityData, showMovingAvg]);
 
     // Calculate growth indicators
-    const weeklyData = useMemo(() => aggregateActivityByTime(rawRecords, 'weekly'), [rawRecords]);
-    const monthlyData = useMemo(() => aggregateActivityByTime(rawRecords, 'monthly'), [rawRecords]);
-
     const wowGrowth = useMemo(() => calculateWoWGrowth(weeklyData), [weeklyData]);
     const momGrowth = useMemo(() => calculateMoMGrowth(monthlyData), [monthlyData]);
 
     // Day of week pattern
-    const dayPattern = useMemo(() => getDayOfWeekPattern(rawRecords), [rawRecords]);
+    const dayPattern = useMemo(() => getDayOfWeekPattern(limitedRecords), [limitedRecords]);
 
     // Latest activity totals
     const latestActivity = activityData.length > 0 ? activityData[activityData.length - 1] : null;
@@ -51,6 +82,16 @@ export const TrendAnalysis: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-full text-white/50 p-12">
                 <Calendar className="w-16 h-16 mb-4 opacity-30" />
                 <p className="text-sm">No data available for trend analysis. Upload CSV files to begin.</p>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-white/50 p-12">
+                <Loader2 className="w-12 h-12 mb-4 animate-spin text-accent-blue" />
+                <p className="text-sm">Processing activity trends...</p>
+                <p className="text-xs text-white/30 mt-2">Analyzing {limitedRecords.length.toLocaleString()} records</p>
             </div>
         );
     }
