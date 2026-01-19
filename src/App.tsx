@@ -7,13 +7,14 @@ import { AgeGroupFilter } from './components/AgeGroupFilter';
 import { ExportPanel } from './components/ExportPanel';
 import { SearchBar } from './components/SearchBar';
 import { useStore } from './store/useStore';
-import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard } from 'lucide-react';
+import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard, ArrowRightLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AnalyticsDashboard } from './components/Analytics/AnalyticsDashboard';
+import { ComparisonView } from './components/Comparison/ComparisonView';
 
 function App() {
     const { uploadedFiles, resetFilters, init } = useStore();
-    const [activeView, setActiveView] = useState<'Dashboard' | 'Analytics'>('Dashboard');
+    const [activeView, setActiveView] = useState<'Dashboard' | 'Analytics' | 'Comparison'>('Dashboard');
 
     useEffect(() => {
         init();
@@ -52,6 +53,13 @@ function App() {
                         >
                             <BarChart3 className="w-4 h-4" />
                             Analytics
+                        </button>
+                        <button
+                            onClick={() => setActiveView('Comparison')}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${activeView === 'Comparison' ? 'bg-white/10 text-white' : 'text-muted-foreground hover:bg-white/5 hover:text-white'}`}
+                        >
+                            <ArrowRightLeft className="w-4 h-4" />
+                            Comparison
                         </button>
                     </nav>
 
@@ -157,8 +165,10 @@ function App() {
                                     <DashboardCharts />
                                 </div>
                             </div>
-                        ) : (
+                        ) : activeView === 'Analytics' ? (
                             <AnalyticsDashboard />
+                        ) : (
+                            <ComparisonView />
                         )
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-white/30 gap-6 min-h-[60vh]">
