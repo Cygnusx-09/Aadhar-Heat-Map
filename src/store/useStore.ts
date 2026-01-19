@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppState, DemographicRecord, GeographicLevel } from '../types';
-
+import { dbOperations } from '../lib/db';
 
 // Helper to separate filter logic
 const applyFilters = (state: AppState): AppState => {
@@ -32,7 +32,7 @@ const applyFilters = (state: AppState): AppState => {
     return { ...state, filteredRecords: filtered };
 };
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
     rawRecords: [],
     filteredRecords: [],
     uploadedFiles: [],
@@ -51,35 +51,79 @@ export const useStore = create<AppState>((set) => ({
     populationRange: [0, 10000000],
 
     isLoading: false,
+    isInitialized: false,
     error: null,
 
-    addRawData: (data, file) => set((state) => {
-        const newRecords = [...state.rawRecords, ...data];
-        const newFiles = [...state.uploadedFiles, file];
+    init: async () => {
+        set({ isLoading: true });
+        try {
+            const datasets = await dbOperations.getAllDatasets();
+            let allRecords: DemographicRecord[] = [];
+            const files = datasets.map(d => {
+                allRecords = [...allRecords, ...d.records];
+                return d.fileInfo;
+            });
 
-        // Update state and re-apply filters (even if filters are empty)
-        const newState = {
-            ...state,
-            rawRecords: newRecords,
-            uploadedFiles: newFiles,
-            isLoading: false,
-            error: null
-            // Note: We keep existing filters to allow "add data to current view"
-        };
-        return applyFilters(newState);
-    }),
+            // Sort files by timestamp if possible, but datasets from idb generic getAll might not be ordered by time added.
+            // That's fine for now.
 
-    removeFile: (fileId) => set((state) => {
-        const newFiles = state.uploadedFiles.filter(f => f.id !== fileId);
-        const newRecords = state.rawRecords.filter(r => r.fileId !== fileId);
+            set(state => {
+                const newState = {
+                    ...state,
+                    uploadedFiles: files,
+                    rawRecords: allRecords,
+                    isLoading: false,
+                    isInitialized: true
+                };
+                return applyFilters(newState);
+            });
+        } catch (err) {
+            console.error("Failed to init from DB", err);
+            set({ isLoading: false, isInitialized: true, error: "Failed to restore data" });
+        }
+    },
 
-        const newState = {
-            ...state,
-            uploadedFiles: newFiles,
-            rawRecords: newRecords,
-        };
-        return applyFilters(newState);
-    }),
+    addRawData: (data, file) => {
+        // optimistically update UI
+        set((state) => {
+            const newRecords = [...state.rawRecords, ...data];
+            const newFiles = [...state.uploadedFiles, file];
+
+            const newState = {
+                ...state,
+                rawRecords: newRecords,
+                uploadedFiles: newFiles,
+                isLoading: false,
+                error: null
+            };
+            return applyFilters(newState);
+        });
+
+        // Persist to DB
+        dbOperations.saveDataset(file, data).catch(err => {
+            console.error("Failed to save to DB", err);
+            // Optionally set error state here
+        });
+    },
+
+    removeFile: (fileId) => {
+        set((state) => {
+            const newFiles = state.uploadedFiles.filter(f => f.id !== fileId);
+            const newRecords = state.rawRecords.filter(r => r.fileId !== fileId);
+
+            const newState = {
+                ...state,
+                uploadedFiles: newFiles,
+                rawRecords: newRecords,
+            };
+            return applyFilters(newState);
+        });
+
+        // Remove from DB
+        dbOperations.deleteDataset(fileId).catch(err => {
+            console.error("Failed to delete from DB", err);
+        });
+    },
 
     setFilters: (filters) => set((state) => {
         const newState = { ...state, ...filters };
@@ -104,7 +148,6 @@ export const useStore = create<AppState>((set) => ({
                 newState = { ...newState, currentLevel: 'Pincode', selectedPincode: name };
                 break;
             default:
-                // No change to newState if level is not recognized
                 break;
         }
         return applyFilters(newState);
@@ -115,7 +158,6 @@ export const useStore = create<AppState>((set) => ({
         if (state.selectedPincode) newState = { ...newState, currentLevel: 'District', selectedPincode: null };
         else if (state.selectedDistrict) newState = { ...newState, currentLevel: 'State', selectedDistrict: null };
         else if (state.selectedState) newState = { ...newState, currentLevel: 'National', selectedState: null };
-        // If no drill-up possible, newState remains unchanged, and applyFilters will just re-apply current filters.
         return applyFilters(newState);
     }),
 

@@ -7,12 +7,16 @@ import { AgeGroupFilter } from './components/AgeGroupFilter';
 import { ExportPanel } from './components/ExportPanel';
 import { useStore } from './store/useStore';
 import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnalyticsDashboard } from './components/Analytics/AnalyticsDashboard';
 
 function App() {
-    const { uploadedFiles, resetFilters } = useStore();
+    const { uploadedFiles, resetFilters, init } = useStore();
     const [activeView, setActiveView] = useState<'Dashboard' | 'Analytics'>('Dashboard');
+
+    useEffect(() => {
+        init();
+    }, [init]);
 
     return (
         <div className="flex min-h-screen bg-background font-sans text-foreground">
