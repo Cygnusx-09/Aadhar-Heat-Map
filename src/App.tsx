@@ -11,6 +11,7 @@ import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard, A
 import { useEffect, useState } from 'react';
 import { AnalyticsDashboard } from './components/Analytics/AnalyticsDashboard';
 import { ComparisonView } from './components/Comparison/ComparisonView';
+import { AnomalyPanel } from './components/Anomaly/AnomalyPanel';
 
 function App() {
     const { uploadedFiles, resetFilters, init } = useStore();
@@ -183,6 +184,7 @@ function App() {
                     )}
                 </div>
             </main>
+            {uploadedFiles.length > 0 && <AnomalyPanel />}
         </div>
     );
 }
