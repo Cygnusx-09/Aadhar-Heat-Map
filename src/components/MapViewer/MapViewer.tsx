@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { LatLngTuple } from 'leaflet';
+import L, { LatLngTuple } from 'leaflet';
 import { useStore } from '../../store/useStore';
 
 const INDIA_CENTER: LatLngTuple = [20.5937, 78.9629];
@@ -12,10 +12,6 @@ const getColor = (value: number, max: number) => {
     if (max === 0) return '#FEF9E7';
     const ratio = value / max;
 
-    // Gradient from yellow (low) to red (high)
-    // Low: #FFEDA0 (255, 237, 160)
-    // High: #800026 (128, 0, 38)
-
     if (ratio > 0.8) return '#800026';
     if (ratio > 0.6) return '#BD0026';
     if (ratio > 0.4) return '#E31A1C';
@@ -24,12 +20,75 @@ const getColor = (value: number, max: number) => {
     return '#FFEDA0';
 };
 
+// -- MAP CONTROLLER COMPONENT (Handle Zoom/Effects) --
+const MapController = ({ geoData, distGeoData }: { geoData: any, distGeoData: any }) => {
+    const map = useMap();
+    const { selectedState, selectedDistrict } = useStore();
+
+    useEffect(() => {
+        if (!map || !geoData) return;
+
+        // Priority 1: District
+        if (selectedDistrict && distGeoData) {
+            // Find district feature
+            // Note: This relies on distGeoData identifying properties.
+            // Adjust search property based on your specific GeoJSON (NAME_2, dtname, etc.)
+            const feature = distGeoData.features.find((f: any) => {
+                const name = f.properties.NAME_2 || f.properties.dtname || f.properties.district;
+                return name === selectedDistrict;
+            });
+
+            if (feature) {
+                const layer = L.geoJSON(feature);
+                map.flyToBounds(layer.getBounds(), { padding: [50, 50], duration: 1.5 });
+                return;
+            }
+        }
+
+        // Priority 2: State
+        if (selectedState && geoData) {
+            const feature = geoData.features.find((f: any) => {
+                const name = f.properties.NAME_1 || f.properties.stname || f.properties.state;
+                return name === selectedState;
+            });
+
+            if (feature) {
+                const layer = L.geoJSON(feature);
+                map.flyToBounds(layer.getBounds(), { padding: [50, 50], duration: 1.5 });
+                return;
+            }
+        }
+
+        // Priority 3: Reset to India Center if nothing selected
+        if (!selectedState && !selectedDistrict) {
+            map.flyTo(INDIA_CENTER, ZOOM_LEVEL, { duration: 1.5 });
+        }
+
+    }, [selectedState, selectedDistrict, geoData, distGeoData, map]);
+
+    return null;
+};
+
+
 const MapViewer: React.FC = () => {
-    const { filteredRecords, ageGroup, drillDown } = useStore();
+    const { filteredRecords, ageGroup, drillDown, selectedDistrict } = useStore();
     const [geoData, setGeoData] = useState<any>(null);
     const [distGeoData, setDistGeoData] = useState<any>(null);
 
+    // Auto-switch view mode logic
+    // If selectedDistrict -> force District or Heatmap? District.
+    // Actually if user wants to see "Heatmap" but focused on district, let them.
+    // But if they just selected "Lucknow", we probably want to show District boundaries.
     const [viewMode, setViewMode] = useState<'Choropleth' | 'District' | 'Heatmap'>('Choropleth');
+
+    useEffect(() => {
+        if (selectedDistrict && viewMode === 'Choropleth') {
+            setViewMode('District');
+        } else if (!selectedDistrict && viewMode === 'District') {
+            // Optional: switch back to state if district cleared? 
+            // Maybe not, user might want to see all districts. Keep current behavior.
+        }
+    }, [selectedDistrict]);
 
     useEffect(() => {
         // Robust helper to get correct asset URL for GitHub Pages
@@ -45,23 +104,8 @@ const MapViewer: React.FC = () => {
         const stateUrl = getAssetUrl('data/india-states.json');
         const distUrl = getAssetUrl('data/india-districts.json');
 
-        console.log('Fetching GeoJSON from:', stateUrl, distUrl);
-
-        fetch(stateUrl)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
-            .then((data) => setGeoData(data))
-            .catch((error) => console.error('Error loading State GeoJSON:', error));
-
-        fetch(distUrl)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
-            .then((data) => setDistGeoData(data))
-            .catch((error) => console.error('Error loading District GeoJSON:', error));
+        fetch(stateUrl).then(res => res.json()).then(setGeoData).catch(console.error);
+        fetch(distUrl).then(res => res.json()).then(setDistGeoData).catch(console.error);
     }, []);
 
     // State level aggregation
@@ -189,6 +233,8 @@ const MapViewer: React.FC = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
 
+                <MapController geoData={geoData} distGeoData={distGeoData} />
+
                 {viewMode === 'Choropleth' && geoData && (
                     <GeoJSON
                         key={`state-${ageGroup}-${filteredRecords.length}`}
@@ -251,5 +297,6 @@ const MapViewer: React.FC = () => {
         </div>
     );
 };
+
 
 export default MapViewer;

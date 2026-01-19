@@ -5,6 +5,7 @@ import DateRangePicker from './components/DateRangePicker';
 import { GeographyFilter } from './components/GeographyFilter';
 import { AgeGroupFilter } from './components/AgeGroupFilter';
 import { ExportPanel } from './components/ExportPanel';
+import { SearchBar } from './components/SearchBar';
 import { useStore } from './store/useStore';
 import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -22,7 +23,7 @@ function App() {
         <div className="flex min-h-screen bg-background font-sans text-foreground">
             {/* Sidebar - Fixed */}
             <aside className="w-72 bg-card border-r border-white/5 flex flex-col h-screen sticky top-0 z-20 shrink-0">
-                <div className="p-6 border-b border-white/5">
+                <div className="p-6 border-b border-white/5 space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="bg-accent-red/10 p-2.5 rounded-xl">
                             <Activity className="w-6 h-6 text-accent-red" />
@@ -32,6 +33,7 @@ function App() {
                             <p className="text-xs text-muted-foreground font-medium">Heatmap Tool</p>
                         </div>
                     </div>
+                    {uploadedFiles.length > 0 && <SearchBar />}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
