@@ -65,9 +65,11 @@ export interface AppState {
 
     // UI State
     isLoading: boolean;
+    isInitialized: boolean;
     error: string | null;
 
     // Actions
+    init: () => Promise<void>;
     addRawData: (data: DemographicRecord[], file: UploadedFile) => void;
     removeFile: (fileId: string) => void;
     setFilters: (filters: Partial<AppState>) => void;

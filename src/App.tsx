@@ -5,20 +5,27 @@ import DateRangePicker from './components/DateRangePicker';
 import { GeographyFilter } from './components/GeographyFilter';
 import { AgeGroupFilter } from './components/AgeGroupFilter';
 import { ExportPanel } from './components/ExportPanel';
+import { SearchBar } from './components/SearchBar';
 import { useStore } from './store/useStore';
-import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard } from 'lucide-react';
-import { useState } from 'react';
+import { Activity, Upload, Filter, Map as MapIcon, BarChart3, LayoutDashboard, ArrowRightLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { AnalyticsDashboard } from './components/Analytics/AnalyticsDashboard';
+import { ComparisonView } from './components/Comparison/ComparisonView';
+import { AnomalyPanel } from './components/Anomaly/AnomalyPanel';
 
 function App() {
-    const { uploadedFiles, resetFilters } = useStore();
-    const [activeView, setActiveView] = useState<'Dashboard' | 'Analytics'>('Dashboard');
+    const { uploadedFiles, resetFilters, init } = useStore();
+    const [activeView, setActiveView] = useState<'Dashboard' | 'Analytics' | 'Comparison'>('Dashboard');
+
+    useEffect(() => {
+        init();
+    }, [init]);
 
     return (
         <div className="flex min-h-screen bg-background font-sans text-foreground">
             {/* Sidebar - Fixed */}
             <aside className="w-72 bg-card border-r border-white/5 flex flex-col h-screen sticky top-0 z-20 shrink-0">
-                <div className="p-6 border-b border-white/5">
+                <div className="p-6 border-b border-white/5 space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="bg-accent-red/10 p-2.5 rounded-xl">
                             <Activity className="w-6 h-6 text-accent-red" />
@@ -28,6 +35,7 @@ function App() {
                             <p className="text-xs text-muted-foreground font-medium">Heatmap Tool</p>
                         </div>
                     </div>
+                    {uploadedFiles.length > 0 && <SearchBar />}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
@@ -46,6 +54,13 @@ function App() {
                         >
                             <BarChart3 className="w-4 h-4" />
                             Analytics
+                        </button>
+                        <button
+                            onClick={() => setActiveView('Comparison')}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${activeView === 'Comparison' ? 'bg-white/10 text-white' : 'text-muted-foreground hover:bg-white/5 hover:text-white'}`}
+                        >
+                            <ArrowRightLeft className="w-4 h-4" />
+                            Comparison
                         </button>
                     </nav>
 
@@ -151,8 +166,10 @@ function App() {
                                     <DashboardCharts />
                                 </div>
                             </div>
-                        ) : (
+                        ) : activeView === 'Analytics' ? (
                             <AnalyticsDashboard />
+                        ) : (
+                            <ComparisonView />
                         )
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-white/30 gap-6 min-h-[60vh]">
@@ -167,6 +184,7 @@ function App() {
                     )}
                 </div>
             </main>
+            {uploadedFiles.length > 0 && <AnomalyPanel />}
         </div>
     );
 }

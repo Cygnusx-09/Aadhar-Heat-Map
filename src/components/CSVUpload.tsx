@@ -1,11 +1,11 @@
-import React, { useCallback, useState } from 'react';
-import Papa from 'papaparse';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { DemographicRecord, UploadedFile } from '../types';
 import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { WorkerResponse } from '../workers/csvParser.worker';
 
-// Simple ID generator if we don't want to add uuid package just for this
+// Simple ID generator
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
 export function CSVUpload() {
@@ -17,160 +17,49 @@ export function CSVUpload() {
         message: '',
     });
 
+    const workerRef = useRef<Worker | null>(null);
+    const pendingUploads = useRef<Map<string, { resolve: () => void, reject: (reason?: any) => void }>>(new Map());
+
+    useEffect(() => {
+        // Initialize Web Worker
+        workerRef.current = new Worker(new URL('../workers/csvParser.worker.ts', import.meta.url), { type: 'module' });
+
+        workerRef.current.onmessage = (e: MessageEvent<WorkerResponse>) => {
+            const { fileId, type } = e.data;
+            const resolver = pendingUploads.current.get(fileId);
+
+            if (resolver) {
+                if (type === 'success') {
+                    // Fix: e.data is discriminated union. If type is success, e.data has data and fileInfo
+                    // Typescript might complain if not toggled correctly, but at runtime it works.
+                    // Casting to specific type for safety in block
+                    const successData = e.data as Extract<WorkerResponse, { type: 'success' }>;
+                    addRawData(successData.data, successData.fileInfo);
+                    resolver.resolve();
+                } else if (type === 'error') {
+                    const errorData = e.data as Extract<WorkerResponse, { type: 'error' }>;
+                    resolver.reject(errorData.message);
+                }
+                pendingUploads.current.delete(fileId);
+            }
+        };
+
+        return () => {
+            workerRef.current?.terminate();
+        };
+    }, [addRawData]);
+
     const processFile = (file: File) => {
         return new Promise<void>((resolve, reject) => {
             const fileId = generateId();
 
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: (results) => {
-                    const { data, meta } = results;
-                    // Exact headers from user's sample
-                    // 1. Validation: Check headers
-                    const headers = results.meta.fields;
-                    if (!headers) {
-                        reject(`File "${file.name}" is invalid: No headers found.`);
-                        return;
-                    }
+            if (!workerRef.current) {
+                reject("Worker not initialized");
+                return;
+            }
 
-                    const requiredBase = ['date', 'state', 'district', 'pincode'];
-                    // Schema 1: Demographic
-                    const demoCols = ['demo_age_5_17', 'demo_age_17_'];
-                    // Schema 2: Biometric
-                    const bioCols = ['bio_age_5_17', 'bio_age_17_'];
-                    // Schema 3: Enrolment
-                    const enrolCols = ['age_0_5', 'age_5_17', 'age_18_greater'];
-
-                    const hasBase = requiredBase.every(col => headers.includes(col));
-                    const hasDemo = demoCols.every(col => headers.includes(col));
-                    const hasBio = bioCols.every(col => headers.includes(col));
-                    const hasEnrol = enrolCols.every(col => headers.includes(col));
-
-                    if (!hasBase || (!hasDemo && !hasBio && !hasEnrol)) {
-                        reject(`File "${file.name}" is invalid. Unknown format.`);
-                        return;
-                    }
-
-                    const newRecords: DemographicRecord[] = [];
-                    const errors: string[] = [];
-
-                    (data as any[]).forEach((row: any, index) => {
-                        if (Object.keys(row).length < 2) return; // Skip empty rows
-
-                        const rowNum = index + 2; // Header is 1
-
-                        // Basic Validation
-                        if (!row.state || !row.district) {
-                            // Optional: log skip
-                            return;
-                        }
-
-                        // Validate date format
-                        const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
-                        if (!dateRegex.test(row.date)) {
-                            errors.push(`Row ${rowNum}: Invalid date "${row.date}".`);
-                            return;
-                        }
-
-                        if (row.pincode && !/^\d{6}$/.test(row.pincode)) {
-                            errors.push(`Row ${rowNum}: Invalid pincode "${row.pincode}".`);
-                            return;
-                        }
-
-                        // Normalize columns
-                        let age0_5 = 0;
-                        let age5_17 = 0;
-                        let age17Plus = 0;
-
-                        if (hasDemo) {
-                            age5_17 = parseInt(row.demo_age_5_17);
-                            age17Plus = parseInt(row.demo_age_17_);
-                        } else if (hasBio) {
-                            age5_17 = parseInt(row.bio_age_5_17);
-                            age17Plus = parseInt(row.bio_age_17_);
-                        } else if (hasEnrol) {
-                            age0_5 = parseInt(row.age_0_5);
-                            age5_17 = parseInt(row.age_5_17);
-                            age17Plus = parseInt(row.age_18_greater);
-                        }
-
-                        if (isNaN(age5_17) || isNaN(age17Plus) || isNaN(age0_5)) {
-                            errors.push(`Row ${rowNum}: Numeric counts required for age groups.`);
-                            return;
-                        }
-
-                        const record: DemographicRecord = {
-                            fileId: fileId,
-                            date: row.date,
-                            state: row.state,
-                            district: row.district,
-                            pincode: row.pincode,
-                            total_population: age0_5 + age5_17 + age17Plus,
-                            lat: row.lat ? parseFloat(row.lat) : undefined,
-                            lng: row.lng ? parseFloat(row.lng) : undefined,
-                        } as any;
-
-                        // Specific mappings based on file type
-                        if (hasBio) {
-                            // Biometric file - populate ONLY bio fields
-                            record.bio_age_5_17 = parseInt(row.bio_age_5_17);
-                            record.bio_age_17_ = parseInt(row.bio_age_17_);
-                        } else if (hasEnrol) {
-                            // Enrollment file - populate ONLY enrol fields
-                            record.enrol_age_0_5 = parseInt(row.age_0_5);
-                            record.enrol_age_5_17 = parseInt(row.age_5_17);
-                            record.enrol_age_18_ = parseInt(row.age_18_greater);
-                        } else if (hasDemo) {
-                            // Demographic file - populate ONLY demo fields
-                            if (isNaN(age5_17) || isNaN(age17Plus)) {
-                                errors.push(`Row ${rowNum}: Invalid age values for demographic file`);
-                                return;
-                            }
-                            record.demo_age_0_5 = age0_5 > 0 ? age0_5 : undefined;
-                            record.demo_age_5_17 = age5_17;
-                            record.demo_age_17_ = age17Plus;
-                        }
-
-                        newRecords.push(record);
-                    });
-
-                    if (errors.length > 0) {
-                        reject(`File ${file.name}: ${errors[0]}`); // Just show first error for now
-                        return;
-                    }
-
-                    // Determine file type
-                    const fileType = hasBio ? 'biometric' : hasEnrol ? 'enrollment' : 'demographic';
-
-                    // Calculate date range from records
-                    const dates = newRecords.map(r => r.date).filter(Boolean).sort((a, b) => {
-                        const parseD = (d: string) => {
-                            const [day, month, year] = d.split('-').map(Number);
-                            return new Date(year, month - 1, day).getTime();
-                        };
-                        return parseD(a) - parseD(b);
-                    });
-
-                    const fileInfo: UploadedFile = {
-                        id: fileId,
-                        name: file.name,
-                        size: file.size,
-                        recordCount: newRecords.length,
-                        fileType: fileType,
-                        dateRange: dates.length > 0 ? {
-                            earliest: dates[0],
-                            latest: dates[dates.length - 1]
-                        } : undefined
-                    };
-
-                    addRawData(newRecords, fileInfo);
-                    resolve();
-                },
-                error: (error) => {
-                    reject(`File ${file.name}: Parse error: ${error.message}`);
-                },
-            });
+            pendingUploads.current.set(fileId, { resolve, reject });
+            workerRef.current.postMessage({ file, fileId });
         });
     };
 
@@ -191,14 +80,18 @@ export function CSVUpload() {
         const errors: string[] = [];
         let successCount = 0;
 
-        for (const file of fileArray) {
+        // Process sequentially or parallel? 
+        // Parallel might overload if many big files, but worker queue handles it. 
+        // Let's do parallel for speed since worker is async.
+
+        await Promise.all(fileArray.map(async (file) => {
             try {
                 await processFile(file);
                 successCount++;
             } catch (err: any) {
                 errors.push(err);
             }
-        }
+        }));
 
         setIsProcessing(false);
 
