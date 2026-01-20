@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppState, DemographicRecord, GeographicLevel } from '../types';
-import { startOfMonth, endOfMonth } from 'date-fns';
+
 
 // Helper to separate filter logic
 const applyFilters = (state: AppState): AppState => {

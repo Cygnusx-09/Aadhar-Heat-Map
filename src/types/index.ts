@@ -11,9 +11,19 @@ export interface DemographicRecord {
     state: string;
     district: string;
     pincode: string;
-    demo_age_0_5?: number; // New optional field for Enrolment data
+    demo_age_0_5?: number;
     demo_age_5_17: number;
     demo_age_17_: number;
+
+    // Biometric Specific
+    bio_age_5_17?: number;
+    bio_age_17_?: number;
+
+    // Enrolment Specific
+    enrol_age_0_5?: number;
+    enrol_age_5_17?: number;
+    enrol_age_18_?: number;
+
     total_population: number;
     lat?: number; // Latitude
     lng?: number; // Longitude

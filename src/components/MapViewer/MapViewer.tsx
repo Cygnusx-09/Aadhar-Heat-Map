@@ -32,15 +32,34 @@ const MapViewer: React.FC = () => {
     const [viewMode, setViewMode] = useState<'Choropleth' | 'District' | 'Heatmap'>('Choropleth');
 
     useEffect(() => {
-        // Load State GeoJSON
-        fetch('/data/india-states.json')
-            .then((response) => response.json())
+        // Robust helper to get correct asset URL for GitHub Pages
+        const getAssetUrl = (path: string) => {
+            const baseUrl = import.meta.env.BASE_URL;
+            // Remove potential double slashes
+            const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+            // If path starts with slash, remove it to append cleanly
+            const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+            return `${cleanBase}${cleanPath}`;
+        };
+
+        const stateUrl = getAssetUrl('data/india-states.json');
+        const distUrl = getAssetUrl('data/india-districts.json');
+
+        console.log('Fetching GeoJSON from:', stateUrl, distUrl);
+
+        fetch(stateUrl)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
             .then((data) => setGeoData(data))
             .catch((error) => console.error('Error loading State GeoJSON:', error));
 
-        // Load District GeoJSON
-        fetch('/data/india-districts.json')
-            .then((response) => response.json())
+        fetch(distUrl)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
             .then((data) => setDistGeoData(data))
             .catch((error) => console.error('Error loading District GeoJSON:', error));
     }, []);

@@ -44,43 +44,43 @@ export const GeographyFilter: React.FC = () => {
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <label className="text-xs font-medium uppercase text-muted-foreground flex justify-between">
+                <label className="text-[10px] font-mono uppercase text-gray-500 tracking-wider flex justify-between">
                     Geography
                     {(selectedState || selectedDistrict || selectedPincode) && (
-                        <button onClick={resetFilters} className="text-primary hover:underline text-[10px]">Reset</button>
+                        <button onClick={resetFilters} className="text-accent-red hover:underline text-[10px]">RESET</button>
                     )}
                 </label>
 
                 {/* State Select */}
                 <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus:ring-1 focus:ring-ring"
+                    className="h-8 w-full rounded-sm border border-white/10 bg-black px-2 py-1 text-xs font-mono text-white shadow-none focus-visible:outline-none focus:border-accent-blue/50 appearance-none"
                     value={selectedState || ''}
                     onChange={(e) => drillDown('State', e.target.value)}
                     disabled={states.length === 0}
                 >
-                    <option value="">Select State</option>
+                    <option value="">SELECT STATE</option>
                     {states.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
 
                 {/* District Select */}
                 <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                    className="h-8 w-full rounded-sm border border-white/10 bg-black px-2 py-1 text-xs font-mono text-white shadow-none focus-visible:outline-none focus:border-accent-blue/50 disabled:opacity-30 disabled:cursor-not-allowed appearance-none"
                     value={selectedDistrict || ''}
                     onChange={(e) => drillDown('District', e.target.value)}
                     disabled={!selectedState || districts.length === 0}
                 >
-                    <option value="">Select District</option>
+                    <option value="">SELECT DISTRICT</option>
                     {districts.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
 
                 {/* Pincode Select */}
                 <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                    className="h-8 w-full rounded-sm border border-white/10 bg-black px-2 py-1 text-xs font-mono text-white shadow-none focus-visible:outline-none focus:border-accent-blue/50 disabled:opacity-30 disabled:cursor-not-allowed appearance-none"
                     value={selectedPincode || ''}
                     onChange={(e) => drillDown('Pincode', e.target.value)}
                     disabled={!selectedDistrict || pincodes.length === 0}
                 >
-                    <option value="">Select Pincode</option>
+                    <option value="">SELECT PINCODE</option>
                     {pincodes.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
             </div>

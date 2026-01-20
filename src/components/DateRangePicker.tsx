@@ -24,22 +24,22 @@ const DateRangePicker: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase">From</label>
+        <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono uppercase text-gray-500 tracking-wider">From</label>
                     <input
                         type="date"
-                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="h-8 w-full rounded-sm border border-white/10 bg-black px-2 py-1 text-xs font-mono text-white shadow-none transition-colors focus-visible:outline-none focus-visible:border-accent-blue/50"
                         value={formatDate(dateRange.start)}
                         onChange={handleStartChange}
                     />
                 </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase">To</label>
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono uppercase text-gray-500 tracking-wider">To</label>
                     <input
                         type="date"
-                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="h-8 w-full rounded-sm border border-white/10 bg-black px-2 py-1 text-xs font-mono text-white shadow-none transition-colors focus-visible:outline-none focus-visible:border-accent-blue/50"
                         value={formatDate(dateRange.end)}
                         onChange={handleEndChange}
                     />
@@ -48,7 +48,7 @@ const DateRangePicker: React.FC = () => {
             {dateRange.start && dateRange.end && (
                 <button
                     onClick={() => setFilters({ dateRange: { start: null, end: null } })}
-                    className="text-xs text-primary hover:underline self-end"
+                    className="text-[10px] font-mono uppercase text-accent-red hover:underline self-end tracking-wider"
                 >
                     Clear Filter
                 </button>
