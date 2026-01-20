@@ -182,21 +182,35 @@ export function CSVUpload() {
                 <div className="space-y-2 mt-4">
                     <h3 className="text-[10px] font-mono uppercase text-gray-500 tracking-wider">Active Files</h3>
                     <div className="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                        {uploadedFiles.map(file => (
-                            <div key={file.id} className="flex items-center justify-between p-2 rounded-sm border border-white/10 bg-black/50 hover:bg-white/5 transition-colors group">
-                                <div className="flex flex-col overflow-hidden">
-                                    <span className="font-mono text-xs text-white truncate uppercase" title={file.name}>{file.name}</span>
-                                    <span className="text-[10px] font-mono text-gray-500">{file.recordCount.toLocaleString()} RECORDS</span>
+                        {uploadedFiles.map(file => {
+                            const typeColors = {
+                                demographic: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                                biometric: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                                enrollment: 'bg-green-500/20 text-green-400 border-green-500/30'
+                            };
+                            const typeLabels = { demographic: 'DEMO', biometric: 'BIO', enrollment: 'ENROL' };
+
+                            return (
+                                <div key={file.id} className="flex items-center justify-between p-2 rounded-sm border border-white/10 bg-black/50 hover:bg-white/5 transition-colors group">
+                                    <div className="flex flex-col overflow-hidden flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${typeColors[file.fileType]}`}>
+                                                {typeLabels[file.fileType]}
+                                            </span>
+                                            <span className="font-mono text-xs text-white truncate uppercase" title={file.name}>{file.name}</span>
+                                        </div>
+                                        <span className="text-[10px] font-mono text-gray-500">{file.recordCount.toLocaleString()} RECORDS</span>
+                                    </div>
+                                    <button
+                                        onClick={() => removeFile(file.id)}
+                                        className="p-1 text-gray-500 hover:text-accent-red transition-colors opacity-0 group-hover:opacity-100"
+                                        title="Remove file"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => removeFile(file.id)}
-                                    className="p-1 text-gray-500 hover:text-accent-red transition-colors opacity-0 group-hover:opacity-100"
-                                    title="Remove file"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}

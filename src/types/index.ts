@@ -1,8 +1,12 @@
+export type FileDataType = 'demographic' | 'biometric' | 'enrollment';
+
 export interface UploadedFile {
     id: string;
     name: string;
     size: number;
     recordCount: number;
+    fileType: FileDataType;
+    dateRange?: { earliest: string; latest: string };
 }
 
 export interface DemographicRecord {
@@ -12,8 +16,8 @@ export interface DemographicRecord {
     district: string;
     pincode: string;
     demo_age_0_5?: number;
-    demo_age_5_17: number;
-    demo_age_17_: number;
+    demo_age_5_17?: number;
+    demo_age_17_?: number;
 
     // Biometric Specific
     bio_age_5_17?: number;
