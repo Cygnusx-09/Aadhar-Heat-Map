@@ -114,3 +114,16 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Project-specific
+# Data files
+data/
+*.csv
+!docs/assets/*.csv
+
+# Exports
+exports/
+
+# Temporary
+temp_*
+project-init/
