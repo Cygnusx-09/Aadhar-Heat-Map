@@ -1,6 +1,6 @@
 
 import Papa from 'papaparse';
-import { DemographicRecord } from '../types';
+import { DemographicRecord, FileDataType } from '../types';
 
 // Define the shape of the message received from the main thread
 interface WorkerMessage {
@@ -10,7 +10,7 @@ interface WorkerMessage {
 
 // Define the shape of the message sent back to the main thread
 export type WorkerResponse =
-    | { type: 'success'; data: DemographicRecord[]; fileId: string; fileInfo: { id: string; name: string; size: number; recordCount: number } }
+    | { type: 'success'; data: DemographicRecord[]; fileId: string; fileInfo: { id: string; name: string; size: number; recordCount: number; fileType: FileDataType } }
     | { type: 'error'; message: string; fileId: string; fileName: string };
 
 self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
@@ -141,11 +141,20 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
                     return;
                 }
 
+                // Determine file type based on detected schema
+                let fileType: FileDataType = 'demographic';
+                if (hasBio) {
+                    fileType = 'biometric';
+                } else if (hasEnrol) {
+                    fileType = 'enrollment';
+                }
+
                 const fileInfo = {
                     id: fileId,
                     name: file.name,
                     size: file.size,
-                    recordCount: newRecords.length
+                    recordCount: newRecords.length,
+                    fileType
                 };
 
                 self.postMessage({

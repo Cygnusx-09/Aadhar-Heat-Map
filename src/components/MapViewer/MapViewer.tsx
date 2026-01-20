@@ -114,7 +114,7 @@ const MapViewer: React.FC = () => {
         if (!filteredRecords.length) return counts;
         filteredRecords.forEach(r => {
             const val = ageGroup === 'Total' ? r.total_population : (ageGroup === '5-17' ? r.demo_age_5_17 : r.demo_age_17_);
-            counts[r.state] = (counts[r.state] || 0) + val;
+            counts[r.state] = (counts[r.state] || 0) + (val || 0);
         });
         return counts;
     }, [filteredRecords, ageGroup]);
@@ -130,7 +130,7 @@ const MapViewer: React.FC = () => {
         if (!filteredRecords.length) return counts;
         filteredRecords.forEach(r => {
             const val = ageGroup === 'Total' ? r.total_population : (ageGroup === '5-17' ? r.demo_age_5_17 : r.demo_age_17_);
-            counts[r.district] = (counts[r.district] || 0) + val;
+            counts[r.district] = (counts[r.district] || 0) + (val || 0);
         });
         return counts;
     }, [filteredRecords, ageGroup]);
@@ -149,8 +149,8 @@ const MapViewer: React.FC = () => {
     }, [filteredRecords, ageGroup]);
 
     const maxPointVal = useMemo(() => {
-        if (pointData.length === 0) return 0;
-        return Math.max(...pointData.map(p => p.val));
+        if (pointData.length === 0) return 1; // Return 1 instead of 0 to avoid division by zero
+        return Math.max(...pointData.map(p => p.val || 0));
     }, [pointData]);
 
     const styleState = (feature: any) => {
@@ -257,7 +257,7 @@ const MapViewer: React.FC = () => {
                     <CircleMarker
                         key={`${point.pincode}-${idx}`}
                         center={[point.lat!, point.lng!]}
-                        radius={Math.max(5, (point.val / maxPointVal) * 20)}
+                        radius={Math.max(5, ((point.val || 0) / maxPointVal) * 20)}
                         pathOptions={{
                             fillColor: '#ef4444', // Red-500
                             fillOpacity: 0.6,
