@@ -1,7 +1,24 @@
 {
     "name": "india-heatmap-tool",
     "private": true,
-    "version": "0.0.1",
+    "version": "1.0.0",
+    "description": "High-performance interactive India demographic heatmap and analytics tool",
+    "author": "Cygnusx-09",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Cygnusx-09/Aadhar-Heat-Map.git"
+    },
+    "keywords": [
+        "react",
+        "vite",
+        "leaflet",
+        "heatmap",
+        "india",
+        "demographics",
+        "analytics",
+        "visualization"
+    ],
     "type": "module",
     "scripts": {
         "dev": "vite",
